@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Achador" />
+  <title>Achador de Produtos</title>
+  <link rel="manifest" href="/manifest.json" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #334155;
+      --border: #475569;
+      --text: #f1f5f9;
+      --text2: #94a3b8;
+      --text3: #64748b;
+      --accent: #6366f1;
+      --accent2: #818cf8;
+      --green: #10b981;
+      --red: #ef4444;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* HEADER */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--bg);
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent2), #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header p { font-size: 12px; color: var(--text3); }
+    .settings-btn {
+      background: var(--surface);
+      border: none;
+      border-radius: 50%;
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--text2); font-size: 18px;
+    }
+
+    /* MAIN */
+    .main { padding: 20px; padding-bottom: 100px; }
+
+    /* UPLOAD */
+    .upload-zone {
+      border: 2px dashed var(--surface2);
+      border-radius: var(--radius);
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--surface);
+      position: relative;
+      overflow: hidden;
+    }
+    .upload-zone:active { transform: scale(0.98); }
+    .upload-zone .icon { font-size: 48px; margin-bottom: 12px; display: block; }
+    .upload-zone h2 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+    .upload-zone p { font-size: 13px; color: var(--text3); }
+    #fileInput { display: none; }
+
+    .camera-btn {
+      margin-top: 16px;
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: opacity 0.2s;
+    }
+    .camera-btn:active { opacity: 0.85; }
+
+    /* PREVIEW */
+    .preview-section { display: none; }
+    .preview-img-wrap { position: relative; border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; }
+    .preview-img { width: 100%; max-height: 280px; object-fit: contain; background: var(--surface); display: block; }
+    .remove-btn {
+      position: absolute; top: 10px; right: 10px;
+      background: rgba(0,0,0,0.6); border: none; border-radius: 50%;
+      width: 32px; height: 32px; color: white; font-size: 16px;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+    }
+    .analyze-btn {
+      width: 100%; padding: 16px;
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      border: none; border-radius: var(--radius-sm);
+      color: white; font-size: 16px; font-weight: 700;
+      cursor: pointer; transition: opacity 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .analyze-btn:active { opacity: 0.85; }
+    .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* LOADING */
+    .loading-section { display: none; text-align: center; padding: 40px 0; }
+    .spinner {
+      width: 48px; height: 48px; border: 3px solid var(--surface2);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 14px; color: var(--text2); }
+    .loading-sub { font-size: 12px; color: var(--text3); margin-top: 6px; }
+
+    /* RESULT */
+    .result-section { display: none; }
+    .result-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .product-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; line-height: 1.3; }
+    .product-category {
+      font-size: 12px; color: var(--accent2);
+      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px;
+    }
+    .product-desc { font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 16px; }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+    .tag {
+      font-size: 12px; padding: 4px 10px;
+      background: var(--surface2); border-radius: 99px; color: var(--text2);
+    }
+
+    .section-title {
+      font-size: 11px; font-weight: 600; color: var(--text3);
+      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px;
+    }
+
+    .price-row { display: flex; gap: 10px; margin-bottom: 20px; }
+    .price-box {
+      flex: 1; background: var(--surface2); border-radius: var(--radius-sm);
+      padding: 12px; text-align: center;
+    }
+    .price-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+    .price-value { font-size: 18px; font-weight: 700; }
+    .price-value.green { color: var(--green); }
+
+    /* STORE LINKS */
+    .stores-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .stores-header {
+      padding: 14px 16px 10px;
+      font-size: 11px; font-weight: 600; color: var(--text3);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      border-bottom: 1px solid var(--surface2);
+    }
+    .store-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--surface2);
+      text-decoration: none; color: inherit;
+      transition: background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .store-item:last-child { border-bottom: none; }
+    .store-item:active { background: var(--surface2); }
+    .store-left { display: flex; align-items: center; gap: 12px; }
+    .store-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--surface2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .store-name { font-size: 15px; font-weight: 600; }
+    .store-price { font-size: 13px; color: var(--text3); margin-top: 2px; }
+    .store-right { display: flex; align-items: center; gap: 8px; }
+    .cheapest-badge {
+      font-size: 10px; padding: 3px 8px; border-radius: 99px;
+      background: rgba(16,185,129,0.15); color: var(--green); font-weight: 600;
+    }
+    .arrow { color: var(--text3); font-size: 18px; }
+
+    /* RESET BTN */
+    .reset-btn {
+      width: 100%; padding: 14px;
+      background: transparent; border: 1px solid var(--surface2);
+      border-radius: var(--radius-sm); color: var(--text2);
+      font-size: 14px; cursor: pointer; transition: background 0.15s;
+    }
+    .reset-btn:active { background: var(--surface); }
+
+    /* SETTINGS MODAL */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      z-index: 50; display: none; align-items: flex-end;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border-radius: 24px 24px 0 0;
+      padding: 24px 20px 40px; width: 100%;
+      animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .modal p { font-size: 13px; color: var(--text2); margin-bottom: 16px; }
+    .modal label { font-size: 12px; color: var(--text3); display: block; margin-bottom: 6px; }
+    .modal input {
+      width: 100%; padding: 12px 14px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text);
+      font-size: 14px; font-family: monospace; margin-bottom: 16px;
+    }
+    .modal input:focus { outline: none; border-color: var(--accent); }
+    .save-btn {
+      width: 100%; padding: 14px;
+      background: var(--accent); border: none;
+      border-radius: var(--radius-sm); color: white;
+      font-size: 15px; font-weight: 600; cursor: pointer;
+    }
+    .modal-close {
+      float: right; background: none; border: none;
+      color: var(--text3); font-size: 22px; cursor: pointer; margin-top: -4px;
+    }
+
+    /* ERROR */
+    .error-box {
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
+      border-radius: var(--radius-sm); padding: 14px 16px;
+      font-size: 14px; color: #fca5a5; margin-bottom: 16px; display: none;
+    }
+
+    /* API KEY WARNING */
+    .api-warning {
+      background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.3);
+      border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 20px;
+      font-size: 13px; color: var(--accent2); line-height: 1.5;
+    }
+    .api-warning strong { display: block; margin-bottom: 4px; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <h1>🔍 Achador</h1>
+    <p>Foto → produto → onde comprar</p>
+  </div>
+  <button class="settings-btn" onclick="openSettings()">⚙️</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- API WARNING -->
+  <div class="api-warning" id="apiWarning" style="display:none">
+    <strong>⚡ Configure sua API Key</strong>
+    Toque em ⚙️ e insira sua chave do Google AI Studio para começar.
+  </div>
+
+  <!-- UPLOAD SECTION -->
+  <div id="uploadSection">
+    <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+      <span class="icon">📦</span>
+      <h2>Envie a foto do produto</h2>
+      <p>Toque para escolher da galeria</p>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" capture="environment" />
+    <button class="camera-btn" onclick="document.getElementById('fileInput').click()">
+      📷 Tirar foto ou escolher da galeria
+    </button>
+  </div>
+
+  <!-- PREVIEW SECTION -->
+  <div id="previewSection" class="preview-section">
+    <div class="preview-img-wrap">
+      <img id="previewImg" class="preview-img" alt="Produto" />
+      <button class="remove-btn" onclick="resetApp()">✕</button>
+    </div>
+    <div class="error-box" id="errorBox"></div>
+    <button class="analyze-btn" id="analyzeBtn" onclick="analyzeProduct()">
+      🔎 Identificar produto e buscar preços
+    </button>
+  </div>
+
+  <!-- LOADING SECTION -->
+  <div id="loadingSection" class="loading-section">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">Analisando imagem...</div>
+    <div class="loading-sub" id="loadingSub">Isso leva alguns segundos</div>
+  </div>
+
+  <!-- RESULT SECTION -->
+  <div id="resultSection" class="result-section">
+
+    <div class="result-card">
+      <div class="product-name" id="rName"></div>
+      <div class="product-category" id="rCategory"></div>
+      <div class="product-desc" id="rDesc"></div>
+      <div class="tags" id="rTags"></div>
+
+      <div class="section-title">Faixa de preço estimada</div>
+      <div class="price-row">
+        <div class="price-box">
+          <div class="price-label">Mínimo</div>
+          <div class="price-value green" id="rMin"></div>
+        </div>
+        <div class="price-box">
+          <div class="price-label">Típico</div>
+          <div class="price-value" id="rTypical"></div>
+        </div>
+        <div class="price-box">
+          <div class="price-label">Máximo</div>
+          <div class="price-value" id="rMax"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stores-card">
+      <div class="stores-header">🛒 Onde comprar — do mais barato ao mais caro</div>
+      <div id="storesList"></div>
+    </div>
+
+    <button class="reset-btn" onclick="resetApp()">← Buscar outro produto</button>
+  </div>
+
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsModal" onclick="closeSettingsOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeSettings()">✕</button>
+    <h3>⚙️ Configurações</h3>
+    <p>Insira sua API Key do Google AI Studio. Ela fica salva só no seu dispositivo.</p>
+    <label>Google Gemini API Key</label>
+    <input type="password" id="apiKeyInput" placeholder="AIza..." autocomplete="off" spellcheck="false" />
+    <button class="save-btn" onclick="saveKey()">Salvar chave</button>
+  </div>
+</div>
+
+<script>
+  const STORE_ICONS = {
+    'Mercado Livre': '🛍️',
+    'Amazon BR': '📦',
+    'Magazine Luiza': '🛒',
+    'Shopee': '🧡',
+    'Americanas': '🔴',
+    'Droga Raia': '💊',
+    'Ultrafarma': '💊',
+    'Tok&Stok': '🪑',
+    'Mobly': '🛋️',
+    'KaBuM!': '💻',
+    'Fast Shop': '⚡',
+  };
+
+  let imageBase64 = null;
+  let imageMime = null;
+
+  // Load API key
+  function getApiKey() { return localStorage.getItem('gemini_api_key') || ''; }
+  function saveKey() {
+    const val = document.getElementById('apiKeyInput').value.trim();
+    if (!val) return alert('Cole sua API key antes de salvar.');
+    localStorage.setItem('gemini_api_key', val);
+    closeSettings();
+    checkApiKey();
+    alert('✅ Chave salva com sucesso!');
+  }
+
+  function checkApiKey() {
+    const hasKey = !!getApiKey();
+    document.getElementById('apiWarning').style.display = hasKey ? 'none' : 'block';
+  }
+
+  function openSettings() {
+    document.getElementById('apiKeyInput').value = getApiKey();
+    document.getElementById('settingsModal').classList.add('open');
+  }
+  function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); }
+  function closeSettingsOutside(e) { if (e.target === document.getElementById('settingsModal')) closeSettings(); }
+
+  // File input
+  document.getElementById('fileInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    imageMime = file.type || 'image/jpeg';
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      imageBase64 = ev.target.result.split(',')[1];
+      document.getElementById('previewImg').src = ev.target.result;
+      document.getElementById('uploadSection').style.display = 'none';
+      document.getElementById('previewSection').style.display = 'block';
+      document.getElementById('errorBox').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  function resetApp() {
+    imageBase64 = null; imageMime = null;
+    document.getElementById('fileInput').value = '';
+    document.getElementById('uploadSection').style.display = 'block';
+    document.getElementById('previewSection').style.display = 'none';
+    document.getElementById('loadingSection').style.display = 'none';
+    document.getElementById('resultSection').style.display = 'none';
+    document.getElementById('errorBox').style.display = 'none';
+  }
+
+  function formatPrice(n) {
+    return 'R$ ' + Number(n).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+
+  const loadingMessages = [
+    ['Analisando imagem...', 'Identificando o produto'],
+    ['Reconhecendo características...', 'Marca, modelo, categoria'],
+    ['Buscando preços no Brasil...', 'Comparando e-commerces'],
+    ['Preparando links de compra...', 'Quase pronto!'],
+  ];
+
+  async function analyzeProduct() {
+    const apiKey = getApiKey();
+    if (!apiKey) { openSettings(); return; }
+    if (!imageBase64) return;
+
+    document.getElementById('previewSection').style.display = 'none';
+    document.getElementById('loadingSection').style.display = 'block';
+    document.getElementById('resultSection').style.display = 'none';
+
+    let li = 0;
+    const lt = setInterval(() => {
+      li = (li + 1) % loadingMessages.length;
+      document.getElementById('loadingText').textContent = loadingMessages[li][0];
+      document.getElementById('loadingSub').textContent = loadingMessages[li][1];
+    }, 2000);
+
+    try {
+      const res = await fetch('/api/identify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64, mimeType: imageMime, apiKey })
+      });
+
+      clearInterval(lt);
+      const data = await res.json();
+
+      if (data.error) {
+        document.getElementById('loadingSection').style.display = 'none';
+        document.getElementById('previewSection').style.display = 'block';
+        const eb = document.getElementById('errorBox');
+        eb.textContent = '⚠️ ' + data.error;
+        eb.style.display = 'block';
+        return;
+      }
+
+      renderResult(data.product, data.lojas);
+
+    } catch (err) {
+      clearInterval(lt);
+      document.getElementById('loadingSection').style.display = 'none';
+      document.getElementById('previewSection').style.display = 'block';
+      const eb = document.getElementById('errorBox');
+      eb.textContent = '⚠️ Erro de conexão. Verifique sua internet e tente novamente.';
+      eb.style.display = 'block';
+    }
+  }
+
+  function renderResult(p, lojas) {
+    document.getElementById('loadingSection').style.display = 'none';
+
+    document.getElementById('rName').textContent = p.nome;
+    document.getElementById('rCategory').textContent = p.categoria;
+    document.getElementById('rDesc').textContent = p.descricao;
+    document.getElementById('rMin').textContent = formatPrice(p.faixa_min);
+    document.getElementById('rTypical').textContent = formatPrice(p.faixa_tipico);
+    document.getElementById('rMax').textContent = formatPrice(p.faixa_max);
+
+    const tagsEl = document.getElementById('rTags');
+    tagsEl.innerHTML = (p.caracteristicas || []).map(c => `<span class="tag">${c}</span>`).join('');
+
+    const storesList = document.getElementById('storesList');
+    storesList.innerHTML = lojas.map((loja, i) => `
+      <a class="store-item" href="${loja.url}" target="_blank" rel="noopener">
+        <div class="store-left">
+          <div class="store-icon">${STORE_ICONS[loja.nome] || '🛒'}</div>
+          <div>
+            <div class="store-name">${loja.nome}</div>
+            <div class="store-price">aprox. ${formatPrice(loja.preco)}</div>
+          </div>
+        </div>
+        <div class="store-right">
+          ${i === 0 ? '<span class="cheapest-badge">mais barato</span>' : ''}
+          <span class="arrow">›</span>
+        </div>
+      </a>
+    `).join('');
+
+    document.getElementById('resultSection').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Init
+  checkApiKey();
+</script>
+</body>
+</html>
